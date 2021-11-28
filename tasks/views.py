@@ -49,12 +49,16 @@ class TaskSubmissionView(APIView):
         task = Task.objects.get(pk=task_id)
         correct_count = 0
         test_cases = task.testcase_set.all()
+        failed_tests = []
+        hidden_test_count = 0
         for test_case in test_cases:
             link = ''
+            adder = ''
             if data['language'] == TaskSubmission.JS:
                 link = 'https://fight-js-compiler.herokuapp.com/compile/'
             elif data['language'] == TaskSubmission.PYTHON:
-                link = 'https://fight-python-compiler.herokuapp.com/compile/'
+                link = 'https://fight-python-compiler.herokuapp.com/compile'
+                adder = '\nSolution.solution = staticmethod(solution)'
             params = []
             inputs = test_case.input.replace('\r', '').split('\n')
             input_types = test_case.input_types.replace('\r', '').split('\n')
@@ -64,12 +68,27 @@ class TaskSubmissionView(APIView):
                     'type': input_types[i]
                 })
             r = lib_requests.post(link, json={
-                'code': data['code'],
+                'code': data['code'] + adder,
                 'type': test_case.return_type,
                 'params': params
             })
-            if str(r.json()['value']) == test_case.output:
-                correct_count += 1
+            try:
+                if str(r.json()['value']) == test_case.output:
+                    correct_count += 1
+                elif not test_case.is_hidden:
+                    failed_tests.append({
+                        'input': test_case.input
+                    })
+                else:
+                    hidden_test_count += 1
+            except Exception as e:
+                print(f'no json response from compiler {e}')
+                if not test_case.is_hidden:
+                    failed_tests.append({
+                        'input': test_case.input
+                    })
+                else:
+                    hidden_test_count += 1
         task_submission = TaskSubmission(
             code=data['code'], language=data['language'], task_id=task_id, user=request.user,
             correct_count=correct_count
@@ -77,5 +96,7 @@ class TaskSubmissionView(APIView):
         task_submission.save()
         res = model_to_dict(task_submission)
         res['accepted'] = correct_count == len(test_cases)
+        res['failed_tests'] = failed_tests
+        res['hidden_test_count'] = hidden_test_count
 
         return Response(res)

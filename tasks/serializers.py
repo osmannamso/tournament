@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.db.models import Count, F
-from django.forms import model_to_dict
 from rest_framework import serializers
 
 
