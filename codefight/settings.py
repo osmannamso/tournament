@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
+import os
 import datetime
 from pathlib import Path
 
@@ -82,7 +83,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'codefight.wsgi.application'
-
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
