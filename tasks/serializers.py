@@ -14,6 +14,7 @@ class TestCaseSerializer(serializers.Serializer):
 
 
 class PureTaskSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
     title = serializers.CharField()
     description = serializers.CharField()
 
@@ -36,7 +37,7 @@ class TaskModelSerializer(PureTaskSerializer):
                     'id': user.id
                 },
                 'accepted': user.tasksubmission_set.annotate(overall=Count('task__testcase'))
-                    .filter(task_id=obj.id, correct_count=F('overall')).exists()
+                    .filter(task_id=obj.id, correct_count=F('overall')).order_by('id')[0].created
             })
 
         return res
