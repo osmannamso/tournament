@@ -31,13 +31,14 @@ class TaskModelSerializer(PureTaskSerializer):
         users = User.objects.all()
         res = []
         for user in users:
+            accepts = user.tasksubmission_set.annotate(overall=Count('task__testcase'))\
+                .filter(task_id=obj.id, correct_count=F('overall')).order_by('id')
             res.append({
                 'user': {
                     'username': user.username,
                     'id': user.id
                 },
-                'accepted': user.tasksubmission_set.annotate(overall=Count('task__testcase'))
-                    .filter(task_id=obj.id, correct_count=F('overall')).order_by('id')[0].created
+                'accepted': accepts[0].created if len(accepts) else None
             })
 
         return res
