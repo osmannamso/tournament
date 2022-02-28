@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from leetcode.models import LeetTournament, LeetUser, LeetSubmission
+from leetcode.models import LeetTournament, LeetUser, LeetSubmission, LeetTask
 
 
 class TournamentView(APIView):
@@ -44,15 +44,21 @@ class TournamentView(APIView):
 
 
 class MakeLeetSubmission(APIView):
-    def post(self, request):
+    def post(self, request, id, username):
+        tournament = LeetTournament.objects.get(pk=id)
+        user = LeetUser.objects.get(username=username)
         data = request.data
         try:
-            submission = LeetSubmission(
-                timestamp=data['timestamp'],
-                task_id=data['task_id'],
-                user_id=data['user_id']
-            )
-            submission.save()
+            submissions = data['data']['recentSubmissionList']
+            for submission in submissions:
+                if submission['statusDisplay'] != 'Accepted':
+                    continue
+                task = LeetTask.objects.filter(name=submission['title'], tournament=tournament).first()
+                if not task:
+                    continue
+                timestamp = int(submission['timestamp'])
+                submission = LeetSubmission(timestamp=timestamp, task=task, user=user)
+                submission.save()
             return Response({'status': 'ok'})
         except Exception as e:
             print(e)
