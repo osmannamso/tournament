@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.utils.dateformat import format
 
 from leetcode.models import LeetTournament, LeetUser, LeetSubmission, LeetTask
 
@@ -46,6 +47,8 @@ class TournamentView(APIView):
 class MakeLeetSubmission(APIView):
     def post(self, request, id, username):
         tournament = LeetTournament.objects.get(pk=id)
+        start = format(tournament.start, 'U')
+        end = format(tournament.end, 'U')
         user = LeetUser.objects.get(username=username)
         data = request.data
         try:
@@ -57,6 +60,8 @@ class MakeLeetSubmission(APIView):
                 if not task:
                     continue
                 timestamp = int(submission['timestamp'])
+                if timestamp < start or timestamp > end:
+                    continue
                 submission = LeetSubmission(timestamp=timestamp, task=task, user=user)
                 submission.save()
             return Response({'status': 'ok'})
