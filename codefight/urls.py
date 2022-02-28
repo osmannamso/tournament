@@ -18,7 +18,8 @@ from django.urls import path, include
 
 api_patterns = [
     path('userinfo/', include('userinfo.urls')),
-    path('tasks/', include('tasks.urls'))
+    path('tasks/', include('tasks.urls')),
+    path('leetcode/', include('leetcode.urls'))
 ]
 
 urlpatterns = (
