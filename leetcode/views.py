@@ -25,6 +25,8 @@ class TournamentView(APIView):
                 'url': leet_user.url,
                 'id': leet_user.id
             }
+            points = 0
+            last_submission = -1
             submissions = []
             for task in leet_tasks:
                 submission = LeetSubmission.objects.filter(user=leet_user, task=task).order_by('timestamp').first()
@@ -32,10 +34,20 @@ class TournamentView(APIView):
                     'task': task.id,
                     'submission': {'timestamp': submission.timestamp} if submission else None
                 })
+                if submission:
+                    points += task.points
+                    last_submission = max(last_submission, submission.timestamp)
             user['submissions'] = submissions
+            user['points'] = points
+            user['last_submission'] = last_submission
             users.append(user)
+        users.sort(reverse=True, key=lambda x: (x['points'], 9999999999 - x['last_submission']))
+        just_users = []
+        for user in users:
+            just_users.append(user['username'])
 
         return Response({
+            'just_users': just_users,
             'start': tournament.start,
             'end': tournament.end,
             'tasks': tasks,
